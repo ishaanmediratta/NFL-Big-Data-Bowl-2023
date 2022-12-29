@@ -1,0 +1,65 @@
+#Packages
+import numpy as np
+import pandas as pd
+#Data imports 
+players = pd.read_csv('players.csv')
+plays = pd.read_csv('plays.csv')
+scout = pd.read_csv('pffScoutingData.csv')
+week1 = pd.read_csv('week1.csv')
+week2 = pd.read_csv('week2.csv')
+week3 = pd.read_csv('week3.csv')
+week4 = pd.read_csv('week4.csv')
+week5 = pd.read_csv('week5.csv')
+week6 = pd.read_csv('week6.csv')
+week7 = pd.read_csv('week7.csv')
+week8 = pd.read_csv('week8.csv')
+#Merge
+merged = pd.merge(scout, plays, how='outer',
+                  left_on='playId', right_on='playId')
+merged = merged.drop('playId', 1)
+merged2 = pd.merge(players, merged, how='outer',
+                  left_on='nflId', right_on='nflId')
+merged = merged.drop('nflId', 1)
+merged2.dropna(axis = 0, how ='any', thresh = None, subset = 'pff_sackAllowed', inplace=True)
+pd.set_option('display.max_columns', 500)
+merged2.head()
+merged2['penaltyYards'] = merged2['penaltyYards'].fillna(0)
+merged2['penaltyYards'] = merged2['penaltyYards'].map(lambda val:0 if val == 0 else 1)
+sacks = merged2['pff_sackAllowed']
+hurry = merged2['pff_hurryAllowed']
+hit = merged2['pff_hitAllowed']
+beat = merged2['pff_beatenByDefender']
+penalty = merged2['penaltyYards']
+name = merged2["displayName"]
+position = merged2["pff_positionLinedUp"]
+formation = merged2["offenseFormation"]
+clean = clean = pd.concat([name, position, formation, beat, hurry, hit, sacks, penalty], axis = 1)
+stats = ['pff_beatenByDefender', 'pff_hurryAllowed', 'pff_hitAllowed', 'pff_sackAllowed', 'penaltyYards']
+clean['BOA+']= clean[stats].sum(axis=1)
+clean2 = clean.drop(stats, axis=1)
+clean2.rename(columns = {'displayName':'Name', 'pff_positionLinedUp':'Position',
+                              'offenseFormation':'Formation'
+                          }, inplace = True)
+filtered = clean2.groupby("Name").filter(lambda x: len(x) >= 100)
+clean2[clean2["Name"].isin(filtered)]
+LT = filtered[filtered.Position.isin(["LT"])]
+LT2 = LT.groupby("Name").filter(lambda x: len(x) >= 100)
+LT2
+LTmean = LT2.groupby(["Name"])["BOA+"].mean()
+LTmean
+LG = filtered[filtered.Position.isin(["LG"])]
+LG2 = LG.groupby("Name").filter(lambda x: len(x) >= 100)
+LGmean = LG2.groupby(["Name"])["BOA+"].mean()
+LGmean 
+C = filtered[filtered.Position.isin(["C"])]
+C2 = C.groupby("Name").filter(lambda x: len(x) >= 100)
+Cmean = C2.groupby(["Name"])["BOA+"].mean()
+Cmean 
+RG = filtered[filtered.Position.isin(["RG"])]
+RG2 = RG.groupby("Name").filter(lambda x: len(x) >= 100)
+RGmean = RG2.groupby(["Name"])["BOA+"].mean()
+RGmean 
+RT = filtered[filtered.Position.isin(["RT"])]
+RT2 = RT.groupby("Name").filter(lambda x: len(x) >= 100)
+RTmean = RT2.groupby(["Name"])["BOA+"].mean()
+RTmean 
